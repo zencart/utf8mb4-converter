@@ -9,7 +9,10 @@
  * @copyright Adapted from http://stackoverflow.com/questions/105572/ and https://mathiasbynens.be/notes/mysql-utf8mb4
  *
  * NOTE!!!! NOTE!!!! NOTE!!!!
- * You should upgrade your Zen Cart store (and database) to at least v1.5.6 before running this script.
+ * You should upgrade your Zen Cart store (and database) to at least v1.5.6 before running this script. 
+ * (This is because the schema updates in v1.5.6 fix index lengths that are required for utf8mb4.)
+ *
+ * Also, MySQL 5.7 or newer is recommended in order to benefit from the "more complete" utf8mb4_unicode_520_ci collation.
  *
  */
 
