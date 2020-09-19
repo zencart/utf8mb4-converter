@@ -13,6 +13,7 @@
  * (This is because the schema updates in v1.5.6 fix index lengths that are required for utf8mb4.)
  *
  * Also, MySQL 5.7 or newer is recommended in order to benefit from the "more complete" utf8mb4_unicode_520_ci collation.
+ * If you "might" downgrade from MySQL 8.0 to 5.7 at some point, avoid the utf8mb4_0900_ai_ci collation as it is not easily downgradeable
  *
  */
 
@@ -31,7 +32,8 @@ $target_charset = 'utf8mb4';
 /////// DO NOT CHANGE BELOW THIS LINE ////////
 
 $collation_fallbacks = array();
-$collation_fallbacks[] = 'utf8mb4_unicode_520_ci';
+// $collation_fallbacks[] = 'utf8mb4_0900_ai_ci'; // only available since MySQL 8.0.2
+$collation_fallbacks[] = 'utf8mb4_unicode_520_ci'; // most reliable since MySQL 5.7.2
 $collation_fallbacks[] = 'utf8mb4_unicode_ci';
 $collation_fallbacks[] = 'utf8mb4_general_ci';
 $collation_fallbacks[] = 'utf8mb4_bin';
