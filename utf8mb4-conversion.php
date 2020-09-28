@@ -17,11 +17,11 @@
  *
  */
 
-$username = 'your_database_username_here';
-$password = 'your_database_password_here';
-$db = 'your_database_name_here';
-$host = 'localhost';
-$prefix = '';  // if your tablenames start with "zen_" or some other common prefix, enter that here.
+$username = 'your_database_username_here';  // same as DB_SERVER_USERNAME in configure.php
+$password = 'your_database_password_here';  // same as DB_SERVER_PASSWORD in configure.php
+$db = 'your_database_name_here';  // same as DB_DATABASE in configure.php
+$host = 'localhost';  // same as DB_SERVER in configure.php
+$prefix = '';  // if your tablenames start with "zen_" or some other common prefix, enter that here. // same as DB_PREFIX in configure.php
 
 
 // recommended setting is 'utf8mb4':
