@@ -89,7 +89,13 @@ foreach ($tables as $table) {
     $t++;
     echo "\nProcessing table [{$table}]:\n";
 
+    // repair table first
+    @set_time_limit(120);
+    mysqli_query($conn, "REPAIR TABLE `{$table}`");
+    printMySqlErrors();
+
     // collect indexes to drop and rebuild
+    @set_time_limit(120);
     $res = mysqli_query($conn, "SHOW INDEX FROM `{$table}`");
     printMySqlErrors();
     $indices = array();
@@ -108,6 +114,7 @@ foreach ($tables as $table) {
     $res = mysqli_query($conn, "DESCRIBE `{$table}`");
     printMySqlErrors();
     while (($row = mysqli_fetch_array($res)) !== null) {
+        @set_time_limit(120);
         $name = $row[0];
         $type = $row[1];
         $allownull = (strtoupper($row[2]) == 'YES') ? 'NULL' : 'NOT NULL';
@@ -170,15 +177,18 @@ foreach ($tables as $table) {
     // re-build indices..
     foreach ($indices as $index) {
         $i++;
+        @set_time_limit(120);
         mysqli_query($conn, "CREATE " . ($index["unique"] ? "UNIQUE " : '') . "INDEX {$index["name"]} ON {$table} ({$index["col"]})");
         printMySqlErrors();
         echo "Recreated " . ($index['unique'] == '1' ? 'unique ' : '') . "index {$index["name"]} on {$table} ({$index["col"]}).\n";
     }
     // set default collate
+    @set_time_limit(120);
     mysqli_query($conn, "ALTER TABLE `{$table}` DEFAULT CHARACTER SET {$target_charset} COLLATE {$target_collate}");
     echo "Table collation updated.\n";
 }
 // set database charset
+@set_time_limit(120);
 mysqli_query($conn, "ALTER DATABASE {$db} DEFAULT CHARACTER SET {$target_charset} COLLATE {$target_collate}");
 mysqli_close($conn);
 echo "</pre>\n";
