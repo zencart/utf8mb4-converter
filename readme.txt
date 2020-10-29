@@ -1,6 +1,13 @@
-This PHP script can be used to convert your MySQL database tables to utf8mb4 while retaining the integrity of all internal multibyte characters. 
+This PHP script can be used to convert your MySQL database tables to utf8mb4 
+while retaining the integrity of all internal multibyte characters. 
 
 REQUIREMENTS:  For best results, use MySQL 5.7 or newer and Zen Cart v1.5.6 or newer BEFORE PROCEEDING.
+
+IMPORTANT: It's actually very important to be using Zen Cart v1.5.6 or even 1.5.7 before proceeding with 
+this conversion, because the upgrade steps in v156/v157 increase database table sizes to allow for the 
+larger storage requirements of multibyte characters. If you run this conversion on shorter fields then
+you may experience loss of data or the script may even fail if the database has strict mode enabled 
+and the fields aren't long enough for the larger characters.*
 
 
 CAUTION: ALWAYS MAKE A DATABASE BACKUP FIRST!!!!
