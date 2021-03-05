@@ -28,6 +28,10 @@ $prefix = '';  // if your tablenames start with "zen_" or some other common pref
 $target_charset = 'utf8mb4';
 
 
+$simulate_only = false;
+$show_sql_in_error_messages = true;
+
+
 
 /////// DO NOT CHANGE BELOW THIS LINE ////////
 
@@ -53,8 +57,8 @@ $conn = mysqli_connect($host, $username, $password);
 mysqli_select_db($conn, $db);
 
 // identify target tables
-$res = mysqli_query($conn, "SHOW TABLES");
-printMySqlErrors();
+$res = mysqli_query($conn, $sql = "SHOW TABLES");
+printMySqlErrors($sql);
 while (($row = mysqli_fetch_row($res)) != null) {
     if ($prefix == '') {
         $tables[] = $row[0];
@@ -64,8 +68,8 @@ while (($row = mysqli_fetch_row($res)) != null) {
 }
 
 // determine best supported target collation
-$res = mysqli_query($conn, "SHOW COLLATION WHERE Charset = '{$target_charset}'");
-printMySqlErrors();
+$res = mysqli_query($conn, $sql = "SHOW COLLATION WHERE Charset = '{$target_charset}'");
+printMySqlErrors($sql);
 $db_collations = array();
 while (($row = mysqli_fetch_row($res)) != null) {
     $db_collations[] = $row[0];
@@ -88,23 +92,31 @@ echo "Converting tables " . ($prefix == '' ? '' : 'with prefix [' . $prefix . ']
 foreach ($tables as $table) {
     $t++;
     echo "\nProcessing table [{$table}]:\n";
+    ob_flush();
 
     // repair table first
     @set_time_limit(120);
-    mysqli_query($conn, "REPAIR TABLE `{$table}`");
-    printMySqlErrors();
+    if (!$simulate_only) {
+        mysqli_query($conn, $sql = "REPAIR TABLE `{$table}`");
+        printMySqlErrors($sql);
+    }
 
     // collect indexes to drop and rebuild
     @set_time_limit(120);
-    $res = mysqli_query($conn, "SHOW INDEX FROM `{$table}`");
-    printMySqlErrors();
+    $res = mysqli_query($conn, $sql = "SHOW INDEX FROM `{$table}`");
+    printMySqlErrors($sql);
     $indices = array();
     while (($row = mysqli_fetch_array($res)) != null) {
         if ($row[2] != "PRIMARY") {
             if (sizeof($indices) == 0 || $indices[sizeof($indices) - 1]['name'] != $row[2]) {
                 $indices[] = array("name" => $row[2], "unique" => (int)!($row[1] == "1"), "col" => $row[4] . ($row[7] < 1 ? '' : "($row[7])"));
-                mysqli_query($conn, "ALTER TABLE `{$table}` DROP INDEX `{$row[2]}`");
-                printMySqlErrors();
+                $sql = "ALTER TABLE `{$table}` DROP INDEX `{$row[2]}`";
+                if ($simulate_only) {
+                    echoSql($sql);
+                } else {
+                    mysqli_query($conn, $sql);
+                    printMySqlErrors($sql);
+                }
                 echo "Temporarily dropped " . ($row[1] == '0' ? 'unique ' : '') . "index {$row[2]}.\n";
             } else {
                 $indices[sizeof($indices) - 1]["col"] .= ', ' . $row[4] . ($row[7] < 1 ? '' : "($row[7])");
@@ -126,7 +138,7 @@ FROM `information_schema`.`COLUMNS`
 WHERE TABLE_NAME = '{$table}' 
 AND TABLE_SCHEMA = '{$db}'";
     $res = mysqli_query($conn, $sql);
-    printMySqlErrors();
+    printMySqlErrors($sql);
     while (($row = mysqli_fetch_assoc($res)) !== null) {
         @set_time_limit(120);
         $name = $row['Field'];
@@ -143,84 +155,178 @@ AND TABLE_SCHEMA = '{$db}'";
         $set = false;
         if (preg_match("/^varchar\((\d+)\)$/i", $type, $matches)) {
             $size = $matches[1];
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` VARBINARY({$size}) {$allownull} {$defaultval}");
-            printMySqlErrors();
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` VARCHAR({$size}) CHARACTER SET {$target_charset} {$allownull} {$defaultval}");
-            printMySqlErrors();
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` VARBINARY({$size}) {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` VARCHAR({$size}) CHARACTER SET {$target_charset} {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
             $set = true;
-            echo "Altered field `{$name}`: `{$type}`\n";
+            echo "Altered field `{$name}`: `{$type} {$allownull} {$defaultval}`\n";
 
         } elseif (preg_match("/^char\((\d+)\)$/i", $type, $matches)) {
             $size = $matches[1];
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` BINARY({$size}) {$allownull} {$defaultval}");
-            printMySqlErrors();
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` CHAR({$size}) CHARACTER SET {$target_charset} {$allownull} {$defaultval}");
-            printMySqlErrors();
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` BINARY({$size}) {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` CHAR({$size}) CHARACTER SET {$target_charset} {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
             $set = true;
-            echo "Altered field `{$name}`: `{$type}`\n";
+            echo "Altered field `{$name}`: `{$type} {$allownull} {$defaultval}`\n";
 
         } elseif (!strcasecmp($type, "TINYTEXT")) {
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` TINYBLOB {$allownull} {$defaultval}");
-            printMySqlErrors();
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` TINYTEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}");
-            printMySqlErrors();
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` TINYBLOB {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` TINYTEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
             $set = true;
-            echo "Altered field `{$name}`: `{$type}`\n";
+            echo "Altered field `{$name}`: `{$type} {$allownull} {$defaultval}`\n";
 
         } elseif (!strcasecmp($type, "MEDIUMTEXT")) {
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` MEDIUMBLOB {$allownull} {$defaultval}");
-            printMySqlErrors();
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` MEDIUMTEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}");
-            printMySqlErrors();
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` MEDIUMBLOB {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` MEDIUMTEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
             $set = true;
-            echo "Altered field `{$name}`: `{$type}`\n";
+            echo "Altered field `{$name}`: `{$type} {$allownull} {$defaultval}`\n";
 
         } elseif (!strcasecmp($type, "LONGTEXT")) {
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` LONGBLOB {$allownull} {$defaultval}");
-            printMySqlErrors();
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` LONGTEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}");
-            printMySqlErrors();
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` LONGBLOB {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` LONGTEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
             $set = true;
-            echo "Altered field `{$name}`: `{$type}`\n";
+            echo "Altered field `{$name}`: `{$type} {$allownull} {$defaultval}`\n";
 
         } elseif (!strcasecmp($type, "TEXT")) {
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` BLOB {$allownull} {$defaultval}");
-            printMySqlErrors();
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` TEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}");
-            printMySqlErrors();
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` BLOB {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` TEXT CHARACTER SET {$target_charset} {$allownull} {$defaultval}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+                printMySqlErrors($sql);
+            }
             $set = true;
-            echo "Altered field `{$name}`: `{$type}`\n";
+            echo "Altered field `{$name}`: `{$type} {$allownull} {$defaultval}`\n";
         }
         if ($set) {
-            mysqli_query($conn, "ALTER TABLE `{$table}` MODIFY `{$name}` COLLATE {$target_collate}");
+            $sql = "ALTER TABLE `{$table}` MODIFY `{$name}` COLLATE {$target_collate}";
+            if ($simulate_only) {
+                echoSql($sql);
+            } else {
+                mysqli_query($conn, $sql);
+            }
         }
     }
+    echo "Processing indexes...\n";
+    ob_flush();
     // re-build indices..
     foreach ($indices as $index) {
         $i++;
         @set_time_limit(120);
-        mysqli_query($conn, "CREATE " . ($index["unique"] ? "UNIQUE " : '') . "INDEX {$index["name"]} ON {$table} ({$index["col"]})");
-        printMySqlErrors();
+        $sql = "CREATE " . ($index["unique"] ? "UNIQUE " : '') . "INDEX {$index["name"]} ON {$table} ({$index["col"]})";
+        if ($simulate_only) {
+            echoSql($sql);
+        } else {
+            mysqli_query($conn, $sql);
+            printMySqlErrors($sql);
+        }
         echo "Recreated " . ($index['unique'] == '1' ? 'unique ' : '') . "index {$index["name"]} on {$table} ({$index["col"]}).\n";
     }
     // set default collate
     @set_time_limit(120);
-    mysqli_query($conn, "ALTER TABLE `{$table}` DEFAULT CHARACTER SET {$target_charset} COLLATE {$target_collate}");
+    $sql = "ALTER TABLE `{$table}` DEFAULT CHARACTER SET {$target_charset} COLLATE {$target_collate}";
+    if ($simulate_only) {
+        echoSql($sql);
+    } else {
+        mysqli_query($conn, $sql);
+        printMySqlErrors($sql);
+    }
     echo "Table collation updated.\n";
+    ob_flush();
 }
 // set database charset
 @set_time_limit(120);
-mysqli_query($conn, "ALTER DATABASE {$db} DEFAULT CHARACTER SET {$target_charset} COLLATE {$target_collate}");
+$sql = "ALTER DATABASE {$db} DEFAULT CHARACTER SET {$target_charset} COLLATE {$target_collate}";
+if ($simulate_only) {
+    echoSql($sql);
+} else {
+    mysqli_query($conn, $sql);
+    printMySqlErrors($sql);
+}
+
 mysqli_close($conn);
 echo "</pre>\n";
 $timer_diff = time() - $timer;
 echo $t . ' Tables processed, ' . $i . ' Indexes processed, ' . $timer_diff . ' seconds elapsed time.' . "\n\n";
 echo '<br><br><br><span style="color:red;font-weight:bold">NOTE: This conversion script should now be DELETED from your server for security reasons!!!!!</span><br><br><br>';
 
-function printMySqlErrors()
+function printMySqlErrors($sql)
 {
     global $conn;
+    global $show_sql_in_error_messages;
     if (mysqli_errno($conn)) {
         echo '<span style="color: red; font-weight: bold">MySQL Error: ' . mysqli_error($conn) . '</span>' . "\n";
+        if ($show_sql_in_error_messages) {
+            echoSql($sql);
+        }
     }
+}
+function echoSql($sql)
+{
+    echo $sql . "\n";   
 }
