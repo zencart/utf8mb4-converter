@@ -118,7 +118,7 @@ foreach ($tables as $table) {
         $name = $row[0];
         $type = $row[1];
         $allownull = (strtoupper($row[2]) == 'YES') ? 'NULL' : 'NOT NULL';
-        $defaultval = (trim($row[4]) == '') ? '' : "DEFAULT '{$row[4]}'";
+        $defaultval = (trim($row[4]) == '') ? "DEFAULT ' '" : "DEFAULT '{$row[4]}'";
         $set = false;
         if (preg_match("/^varchar\((\d+)\)$/i", $type, $matches)) {
             $size = $matches[1];
