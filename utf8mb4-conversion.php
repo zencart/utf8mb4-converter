@@ -29,6 +29,7 @@ $target_charset = 'utf8mb4';
 
 
 $simulate_only = false;
+$skip_fields_already_using_new_collation_charset = true;
 $show_sql_in_error_messages = true;
 
 
@@ -127,6 +128,7 @@ foreach ($tables as $table) {
 //    $res = mysqli_query($conn, "DESCRIBE `{$table}`");
 $sql = "SELECT `COLUMN_NAME` AS `Field`,
 `COLUMN_TYPE`       AS `Type`,
+`CHARACTER_SET_NAME` AS `Charset`,
 `COLLATION_NAME`    AS `Collation`,
 `IS_NULLABLE`       AS `Null`,
 `COLUMN_KEY`        AS `Key`,
@@ -151,7 +153,13 @@ AND TABLE_SCHEMA = '{$db}'";
             if ($default === '') $default = "''";
             $defaultval = "DEFAULT {$default}";
         }
-        $current_collation = $row['Collation']; // @TODO: future ... could test this field to skip the column if already using the desired collation
+
+        $current_charset = $row['Charset'];
+        if ($skip_fields_already_using_new_collation_charset && $current_charset === $target_charset) {
+            echo "Skipping {$name} because it is already using {$target_charset}.\n";
+            continue;
+        }
+
         $set = false;
         if (preg_match("/^varchar\((\d+)\)$/i", $type, $matches)) {
             $size = $matches[1];
