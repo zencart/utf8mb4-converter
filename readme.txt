@@ -38,7 +38,21 @@ While a full list of possible database-problems is impossible to curate here, co
 
 In most cases the script is able to correctly re-create all indexes that were originally on the tables; however in some cases of failure due to bad data it may have already deleted an index that it wasn't yet ready to re-create; in these cases you will have to recreate the index yourself. Clues regarding the index are shown on the screen when the indexes are temporarily deleted: it would be wise to note all those details before re-running the script so that you can check for those indexes afterward. Troubleshooting this factor is technically advanced. You might want to consult the original mysql_zencart.sql install script for details of all the indexes that should exist on each table. (An export of table-structure-only could make the inspection process quite simple.)
 
+BLANK DEFAULTS
 
+Prior versions of this script would clobber the default values for fields with blank defaults.  For example 
+
+```
+  full_name varchar(64) NOT NULL default ''
+```
+
+would be come 
+
+```
+  full_name varchar(64) NOT NULL
+```
+
+The fix_blank_defaults.php script can be run to fix this. 
 
 REVISION HISTORY
 ----------------
