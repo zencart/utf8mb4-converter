@@ -48,3 +48,6 @@ REVISION HISTORY
 * r0.3 2011-07-02 DrByte www.zen-cart.com - Added support for variable-length char fields
 * r0.4 2020-09-19 DrByte www.zen-cart.com - Updated to work with utf8mb4 primarily (does NOT account for index fields longer than allowed 191 chars; upgrade to Zen Cart v1.5.6 first so the schema can handle these limitations)
 * r0.5 2020-10-29 DrByte www.zen-cart.com - Added `repair table` statements, and extended timeouts for the benefit of larger tables
+* r0.6 2021-03-05 DrByte www.zen-cart.com - Fixed broken "DEFAULT" regeneration
+* r0.7 2021-03-05 DrByte www.zen-cart.com - Enhanced output/logging
+* r1.0 2021-03-05 DrByte www.zen-cart.com - Skip already-converted fields (can be disabled by setting option to false)
