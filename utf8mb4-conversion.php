@@ -2,7 +2,7 @@
 /**
  * A script to convert database collation/charset to utf8mb4
  *
- * @copyright Copyright 2003-2020 Zen Cart Development Team
+ * @copyright Copyright 2003-2021 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: utf8mb4-conversion.php $
  *
@@ -111,14 +111,35 @@ foreach ($tables as $table) {
             }
         }
     }
-    $res = mysqli_query($conn, "DESCRIBE `{$table}`");
+
+//    $res = mysqli_query($conn, "DESCRIBE `{$table}`");
+$sql = "SELECT `COLUMN_NAME` AS `Field`,
+`COLUMN_TYPE`       AS `Type`,
+`COLLATION_NAME`    AS `Collation`,
+`IS_NULLABLE`       AS `Null`,
+`COLUMN_KEY`        AS `Key`,
+`COLUMN_DEFAULT`    AS `Default`,
+`EXTRA`             AS `Extra`,
+`PRIVILEGES`        AS `Privileges`,
+`COLUMN_COMMENT`    AS `Comment`
+FROM `information_schema`.`COLUMNS`
+WHERE TABLE_NAME = '{$table}' 
+AND TABLE_SCHEMA = '{$db}'";
+    $res = mysqli_query($conn, $sql);
     printMySqlErrors();
-    while (($row = mysqli_fetch_array($res)) !== null) {
+    while (($row = mysqli_fetch_assoc($res)) !== null) {
         @set_time_limit(120);
-        $name = $row[0];
-        $type = $row[1];
-        $allownull = (strtoupper($row[2]) == 'YES') ? 'NULL' : 'NOT NULL';
-        $defaultval = (trim($row[4]) == '') ? '' : "DEFAULT '{$row[4]}'";
+        $name = $row['Field'];
+        $type = $row['Type'];
+        $allownull = (strtoupper($row['Null']) === 'YES') ? 'NULL' : 'NOT NULL';
+        $defaultval = ($allownull === 'NULL') ? 'DEFAULT NULL' : '';
+        if (isset($row['Default']) && $row['Default'] !== null) {
+            $default = $row['Default'];
+            $default = str_replace(["''''", "''''''", "'NULL'"], '', $default);
+            if ($default === '') $default = "''";
+            $defaultval = "DEFAULT {$default}";
+        }
+        $current_collation = $row['Collation']; // @TODO: future ... could test this field to skip the column if already using the desired collation
         $set = false;
         if (preg_match("/^varchar\((\d+)\)$/i", $type, $matches)) {
             $size = $matches[1];
