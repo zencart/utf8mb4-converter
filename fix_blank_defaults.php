@@ -1,7 +1,8 @@
 <?php
 /**
  * A script to fix blank defaults for databases that ran the conversion
- * script before this issue was fixed. 
+ * script before this issue was fixed with the 2021-03-05 release.
+ * This script is NOT needed if you have not run the utf8mb4 conversion script already.
  *
  * @copyright Copyright 2003-2020 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
