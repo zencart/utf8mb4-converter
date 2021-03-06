@@ -14,29 +14,61 @@ CAUTION: ALWAYS MAKE A DATABASE BACKUP FIRST!!!!
 
 
 Instructions:
+
 0) BACKUP YOUR DATABASE!!!
-a) upload the accompanying PHP file to your store's primary folder (same place as ipn_main_handler.php)
+
+a) upload the accompanying PHP file to your store's root folder (same place as `ipn_main_handler.php`)
+
 b) edit the PHP file to set your database username, password, dbname, and prefix (if any)
+
 c) use your browser to access the file 
 The conversion will show current progress as it proceeds, and statistics upon completion. 
+
 d) DELETE THE FILE FROM YOUR SERVER when finished.
 
 e) Update your Zen Cart configuration to use the new character set. BOTH your admin AND storefront files need these.
-- configure.php (both) need a line which says: define('DB_CHARSET', 'utf8mb4');
-- language files (english.php, etc) need define('CHARSET', 'utf-8'); and define('LC_TIME, 'en_US.utf8'); (for english)
+- `configure.php` (both) need a line which says: `define('DB_CHARSET', 'utf8mb4');`
+- language files (english.php, etc) need `define('CHARSET', 'utf-8');` and `define('LC_TIME, 'en_US.utf8');` (for english)
 - ALL your language files need to be encoded as UTF8-without-BOM. This is a function of your editor's "save" settings.
 
 
 
 Troubleshooting:
 ----------------
-If you encounter errors converting certain tables due to bad data in them, simply fix the bad data and then re-run the script. It will recognize what has already been converted and continue with the last failed operation.
-
-While a full list of possible database-problems is impossible to curate here, common bad-data issues might include:
-- bad date formats in existing data; see https://docs.zen-cart.com/user/upgrading/date_standardization/
-- broken tables (such as broken auto-increments or corrupt indexes) which are usually fixed by simply running a 'repair' on the table either from phpMyAdmin's Operations tab or via your hosting control panel's databases page or by manually running `REPAIR TABLE tablename;` in phpMyAdmin.
+If you encounter errors converting certain tables due to bad data in them, simply fix the bad data and then re-run the script. It will recognize what has already been converted and continue with the last failed operation.  For more details on corrective action, please see https://docs.zen-cart.com/user/upgrading/convert_to_utf8/
 
 In most cases the script is able to correctly re-create all indexes that were originally on the tables; however in some cases of failure due to bad data it may have already deleted an index that it wasn't yet ready to re-create; in these cases you will have to recreate the index yourself. Clues regarding the index are shown on the screen when the indexes are temporarily deleted: it would be wise to note all those details before re-running the script so that you can check for those indexes afterward. Troubleshooting this factor is technically advanced. You might want to consult the original mysql_zencart.sql install script for details of all the indexes that should exist on each table. (An export of table-structure-only could make the inspection process quite simple.)
+
+Missing Defaults:
+-----------------
+
+Older versions of the `utf8mb4-conversion` script (prior to 03/05/2021) had a defect wherein blank defaults would not be recreated.  So a field definition like 
+
+```
+customers_firstname varchar(32) NOT NULL default ''
+```
+
+would become
+
+```
+customers_firstname varchar(32) NOT NULL
+```
+
+This has been fixed but if you ran the script prior to the fix, your database structure will be incorrect since the defaults are missing. 
+
+To fix this, use the script `optional/fix_blank_defaults.php` as follows:
+
+Instructions:
+
+0) BACKUP YOUR DATABASE!!!
+
+a) upload the file `optional/fix_blank_defaults.php` to your store's root folder (same place as `ipn_main_handler.php`)
+
+b) edit the PHP file to set your database username, password, dbname, and prefix (if any)
+
+c) use your browser to access the file The conversion will show current progress as it proceeds. 
+
+d) DELETE THE FILE FROM YOUR SERVER when finished.
 
 
 
@@ -51,3 +83,5 @@ REVISION HISTORY
 * r0.6 2021-03-05 DrByte www.zen-cart.com - Fixed broken "DEFAULT" regeneration
 * r0.7 2021-03-05 DrByte www.zen-cart.com - Enhanced output/logging
 * r1.0 2021-03-05 DrByte www.zen-cart.com - Skip already-converted fields (can be disabled by setting option to false)
+*      2021-03-05 swguy  www.zen-cart.com - Add optional fix_blank_defaults.php script to fix databases updated prior to r0.6.
+
