@@ -83,5 +83,5 @@ REVISION HISTORY
 * r0.6 2021-03-05 DrByte www.zen-cart.com - Fixed broken "DEFAULT" regeneration
 * r0.7 2021-03-05 DrByte www.zen-cart.com - Enhanced output/logging
 * r1.0 2021-03-05 DrByte www.zen-cart.com - Skip already-converted fields (can be disabled by setting option to false)
-*      2021-03-05 swguy  www.zen-cart.com - Add optional fix_blank_defaults.php script to fix databases updated prior to r0.6.
+*      2021-03-05 swguy  thatsoftwareguy.com - Add optional fix_blank_defaults.php script to fix databases updated prior to r0.6.
 
