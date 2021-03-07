@@ -1,19 +1,24 @@
 This PHP script can be used to convert your MySQL database tables to utf8mb4 
 while retaining the integrity of all internal multibyte characters. 
 
-REQUIREMENTS:  For best results, use MySQL 5.7 or newer and Zen Cart v1.5.6 or newer BEFORE PROCEEDING.
+## REQUIREMENTS
+For best results, use MySQL 5.7 or newer and Zen Cart v1.5.6 or newer BEFORE PROCEEDING.
 
-IMPORTANT: It's actually very important to be using Zen Cart v1.5.6 or even 1.5.7 before proceeding with 
+## IMPORTANT
+It's actually **very important** to be using Zen Cart v1.5.6 or even 1.5.7 before proceeding with 
 this conversion, because the upgrade steps in v156/v157 increase database table sizes to allow for the 
 larger storage requirements of multibyte characters. If you run this conversion on shorter fields then
 you may experience loss of data or the script may even fail if the database has strict mode enabled 
-and the fields aren't long enough for the larger characters.*
+and the fields aren't long enough for the larger characters.
+
+#### Generic Script
+While this script was primarily set up to assist Zen Cart users, nothing in it is specific to Zen Cart. In theory one could use it to migrate all the tables in any database to utf8mb4.
 
 
-CAUTION: ALWAYS MAKE A DATABASE BACKUP FIRST!!!!
+## CAUTION: ALWAYS MAKE A DATABASE BACKUP FIRST!!!!
 
 
-Instructions:
+## Instructions:
 
 0) BACKUP YOUR DATABASE!!!
 
@@ -33,14 +38,15 @@ e) Update your Zen Cart configuration to use the new character set. BOTH your ad
 
 
 
-Troubleshooting:
-----------------
+## Troubleshooting
+
 If you encounter errors converting certain tables due to bad data in them, simply fix the bad data and then re-run the script. It will recognize what has already been converted and continue with the last failed operation.  For more details on corrective action, please see https://docs.zen-cart.com/user/upgrading/convert_to_utf8/
 
 In most cases the script is able to correctly re-create all indexes that were originally on the tables; however in some cases of failure due to bad data it may have already deleted an index that it wasn't yet ready to re-create; in these cases you will have to recreate the index yourself. Clues regarding the index are shown on the screen when the indexes are temporarily deleted: it would be wise to note all those details before re-running the script so that you can check for those indexes afterward. Troubleshooting this factor is technically advanced. You might want to consult the original mysql_zencart.sql install script for details of all the indexes that should exist on each table. (An export of table-structure-only could make the inspection process quite simple.)
 
-Missing Defaults:
------------------
+----
+
+## In case of missing defaults (if you ran an older version of this script)
 
 Older versions of the `utf8mb4-conversion` script (prior to 03/05/2021) had a defect wherein blank defaults would not be recreated.  So a field definition like 
 
@@ -72,8 +78,9 @@ d) DELETE THE FILE FROM YOUR SERVER when finished.
 
 
 
-REVISION HISTORY
-----------------
+----
+
+## REVISION HISTORY
 * Adapted from http://stackoverflow.com/questions/105572/
 * r0.1 2011-06-01 DrByte www.zen-cart.com - Added support for multi-key and partial-length indices and table prefixes
 * r0.2 2011-07-01 DrByte www.zen-cart.com - Added support for proper handling of column defaults and proper null handling
