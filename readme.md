@@ -33,7 +33,8 @@ d) DELETE THE FILE FROM YOUR SERVER when finished.
 
 e) Update your Zen Cart configuration to use the new character set. BOTH your admin AND storefront files need these.
 - `configure.php` (both) need a line which says: `define('DB_CHARSET', 'utf8mb4');`
-- language files (english.php, etc) need `define('CHARSET', 'utf-8');` and `define('LC_TIME, 'en_US.utf8');` (for english)
+- language files (english.php, etc) need `define('CHARSET', 'utf-8');` 
+- language files (english.php, etc) need `'en_US.utf8'` (for english) in the list of `$locales`. See [example](https://github.com/zencart/zencart/blob/c6422419a9264b4102d36f6389d826b6cbee2b9a/includes/languages/english.php#L23-L24)
 - ALL your language files need to be encoded as UTF8-without-BOM. This is a function of your editor's "save" settings.
 
 
