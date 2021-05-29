@@ -151,6 +151,9 @@ AND TABLE_SCHEMA = '{$db}'";
             $default = $row['Default'];
             $default = str_replace(["''''", "''''''", "'NULL'"], '', $default);
             if ($default === '') $default = "''";
+            if (stripos($type, 'char') !== false && substr($type, 0, 1) !== "'" && substr($type, -1) !== "'") {
+                $default = "'{$default}'";
+            }
             $defaultval = "DEFAULT {$default}";
         }
 
