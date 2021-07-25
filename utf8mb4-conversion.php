@@ -16,23 +16,32 @@
  * If you "might" downgrade from MySQL 8.0 to 5.7 at some point, avoid the utf8mb4_0900_ai_ci collation as it is not easily downgradeable
  *
  */
+// -----
+// Gather the site's current database configuration settings, using those for the database update.
+//
+if (file_exists('includes/local/configure.php')) {
+    require 'includes/local/configure.php';
+}
+if (file_exists('includes/configure.php')) {
+    require 'includes/configure.php';
+}
+if (!defined('DB_SERVER')) {
+    exit('Could not locate the current includes/configure.php, exiting.');
+}
 
-$username = 'your_database_username_here';  // same as DB_SERVER_USERNAME in configure.php
-$password = 'your_database_password_here';  // same as DB_SERVER_PASSWORD in configure.php
-$db = 'your_database_name_here';  // same as DB_DATABASE in configure.php
-$host = 'localhost';  // same as DB_SERVER in configure.php
-$prefix = '';  // if your tablenames start with "zen_" or some other common prefix, enter that here. // same as DB_PREFIX in configure.php
+$username = DB_SERVER_USERNAME;
+$password = DB_SERVER_PASSWORD;
+$db = DB_DATABASE;
+$host = DB_SERVER;
+$prefix = DB_PREFIX;
 
 
 // recommended setting is 'utf8mb4':
 $target_charset = 'utf8mb4';
 
-
 $simulate_only = false;
 $skip_fields_already_using_new_collation_charset = true;
 $show_sql_in_error_messages = true;
-
-
 
 /////// DO NOT CHANGE BELOW THIS LINE ////////
 
@@ -145,12 +154,14 @@ AND TABLE_SCHEMA = '{$db}'";
         @set_time_limit(120);
         $name = $row['Field'];
         $type = $row['Type'];
-        $allownull = (strtoupper($row['Null']) === 'YES') ? 'NULL' : 'NOT NULL';
-        $defaultval = ($allownull === 'NULL') ? 'DEFAULT NULL' : '';
-        if (isset($row['Default']) && $row['Default'] !== null) {
+        $allownull = (strtoupper($row['Null']) === 'YES') ? '' : 'NOT NULL';
+        $defaultval = ($allownull === '') ? 'DEFAULT NULL' : '';
+        if (isset($row['Default']) && $row['Default'] !== 'NULL' && $row['Default'] !== null) {
             $default = $row['Default'];
-            $default = str_replace(["''''", "''''''", "'NULL'"], '', $default);
-            if ($default === '') $default = "''";
+            $default = trim($default, "'");
+            if (stripos($type, 'char') !== false && substr($type, 0, 1) !== "'" && substr($type, -1) !== "'") {
+                $default = "'{$default}'";
+            }
             $defaultval = "DEFAULT {$default}";
         }
 
