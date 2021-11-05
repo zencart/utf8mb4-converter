@@ -19,12 +19,17 @@
 // -----
 // Gather the site's current database configuration settings, using those for the database update.
 //
+// Note: Disabling warnings; if the local/configure.php was present and had settings also present in
+// the main configure.php, duplicate-constant warnings would otherwise be issued.
+//
 if (file_exists('includes/local/configure.php')) {
     require 'includes/local/configure.php';
 }
+$original_error_reporting = error_reporting(E_ALL ^ E_WARNING); 
 if (file_exists('includes/configure.php')) {
     require 'includes/configure.php';
 }
+error_reporting($original_error_reporting);
 if (!defined('DB_SERVER')) {
     exit('Could not locate the current includes/configure.php, exiting.');
 }

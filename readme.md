@@ -91,5 +91,8 @@ d) DELETE THE FILE FROM YOUR SERVER when finished.
 * r0.6 2021-03-05 DrByte www.zen-cart.com - Fixed broken "DEFAULT" regeneration
 * r0.7 2021-03-05 DrByte www.zen-cart.com - Enhanced output/logging
 * r1.0 2021-03-05 DrByte www.zen-cart.com - Skip already-converted fields (can be disabled by setting option to false)
-* 2021-03-05 swguy  thatsoftwareguy.com - Add optional fix_blank_defaults.php script to fix databases updated prior to r0.6.
+* r1.1 2021-03-05 swguy  thatsoftwareguy.com - Add optional fix_blank_defaults.php script to fix databases updated prior to r0.6.
+* r1.2 2021-11-05 lat9/DrByte
+  * Add additional quotes on text-fields' default values (DrByte)
+  * Updating to use `configure.php` for settings, correcting default values (lat9)
 
