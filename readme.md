@@ -1,3 +1,5 @@
+**Please Note: This plugin is deprecated; please use https://github.com/lat9/database-converter instead.**
+
 This PHP script can be used to convert your MySQL database tables to utf8mb4 
 while retaining the integrity of all internal multibyte characters. 
 
